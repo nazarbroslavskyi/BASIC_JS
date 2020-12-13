@@ -24,7 +24,7 @@ function* fibonacci(n) {
 let [...first10] = fibonacci(10); 
 console.log(first10); // → [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
 
-// As I understood numeration starts from zero
+// As I understood numeration starts from one
 // and I have added this tricky checking
 
   // if(n === 1) {

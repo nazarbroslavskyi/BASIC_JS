@@ -1,0 +1,25 @@
+* {
+  padding: 0;
+  margin: 0;
+}
+
+.container {
+  display: flex;
+  padding: 20px;
+}
+
+.container__input-fields {
+  display: flex;
+  flex-direction: column;
+  margin-right: 20px;
+}
+
+.container__text {
+  background-color: wheat;
+  width: 100%;
+  padding: 10px;
+}
+
+.container__textarea {
+  margin-top: 10px;
+}

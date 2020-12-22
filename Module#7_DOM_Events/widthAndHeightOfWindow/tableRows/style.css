@@ -1,0 +1,53 @@
+* {
+  padding: 0;
+  margin: 0;
+}
+
+.table {
+  border: solid 1px #DDEEEE;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font: normal 13px Arial, sans-serif;
+  margin: 20px;
+}
+.table thead th {
+  background-color: #DDEFEF;
+  border: solid 1px #DDEEEE;
+  color: #336B6B;
+  padding: 10px;
+  text-align: left;
+  text-shadow: 1px 1px 1px #fff;
+}
+.table tbody td {
+  border: solid 1px #DDEEEE;
+  color: #333;
+  padding: 10px;
+  text-shadow: 1px 1px 1px #fff;
+}
+
+.delete-icon {
+  width: 20px;
+}
+
+.add-btn {
+  padding: 3px 10px;
+  margin-left: 20px;
+}
+
+.add-btn:hover {
+  cursor: pointer;
+}
+
+.delete-btn {
+  border: none;
+  background-color: white;
+}
+
+.delete-btn:hover {
+  cursor: pointer;
+  transform:  scale(1.2);;
+}
+
+.delete-cell {
+  text-align: center;
+}

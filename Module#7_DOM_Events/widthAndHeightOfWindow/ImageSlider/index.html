@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="./style.css" />
+    <script defer src="./index.js"></script>
+  </head>
+  <body>
+    <div class="slider-options">
+      <div class="slider-options__add-btn">
+        <input
+          class="slider-options__add-img-input"
+          placeholder="Image URL"
+          type="text"
+        />
+        <button class="slider-options__add-img-btn">Add</button>
+      </div>
+      <div class="slider-options__timer">
+        <p class="slider-options__timer-label">Timer (sec):</p>
+        <div class="slider-options__timer-btn-wrapper">
+          <input
+            class="slider-options__timer-input"
+            type="number"
+            value="1"
+            min="1"
+          />
+        </div>
+      </div>
+    </div>
+    <div class="slider-wrapper">
+      <div class="slider-container"></div>
+    </div>
+
+    <div id="sliderNav">
+      <div id="sliderPrev" onclick="prevSlide();">
+        <img
+          class="chevron"
+          src="https://cdn4.iconfinder.com/data/icons/ionicons/512/icon-chevron-left-512.png"
+        />
+      </div>
+      <div id="sliderNext" onclick="nextSlide();">
+        <img
+          class="chevron"
+          src="https://cdn4.iconfinder.com/data/icons/ionicons/512/icon-chevron-left-512.png"
+        />
+      </div>
+    </div>
+  </body>
+</html>

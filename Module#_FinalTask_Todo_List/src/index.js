@@ -1,5 +1,4 @@
 import "./styles.scss";
-import TodoItem from './components/todo-item';
 
 class TodoItemClass {
   constructor(id, done, description, dataCreation, resolveData) {

@@ -1,20 +1,9 @@
 import "./styles.scss";
 
-class TodoItemClass {
-  constructor(id, done, description, dataCreation, resolveData) {
-    this.done = done;
-    this.description = description;
-    this.dataCreation = dataCreation;
-    this.resolveData = resolveData;
-    this.id = id;
-  }
-}
-
 class Model {
   constructor() {
-    // this.todos = [new TodoItemClass(1, false, 'feed a dog', new Date(), null), new TodoItemClass(2, false, 'make a homework', new Date(), new Date()) ]
-    this.initialTodos = JSON.parse(localStorage.getItem("todos"));
-    this.todos = JSON.parse(localStorage.getItem("todos"));
+    this.initialTodos = JSON.parse(localStorage.getItem("todos")) ? JSON.parse(localStorage.getItem("todos")) : [];
+    this.todos = JSON.parse(localStorage.getItem("todos")) ? JSON.parse(localStorage.getItem("todos")) : [];
   }
 
   addTodo(todoText) {
@@ -28,7 +17,9 @@ class Model {
       done: false,
       description: todoText,
       dataCreation: this.tranformDate(new Date()),
+      dateOfCreation: new Date(),
       resolveData: null,
+      dueDate: null,
       id: ++todoId,
     }
 
@@ -80,7 +71,7 @@ class Model {
   }
 
   bindTodoListChanged(callback) {
-    this.onTodoListChanged = callback
+    this.onTodoListChanged = callback;
   }
 
   toggleTodo(id) {
@@ -89,7 +80,7 @@ class Model {
 
     this.todos = this.todos.map((todo) => {
       console.log(todo)
-      return todo.id === id ? { ...todo, done: !todo.done, resolveData: todo.resolveData ? null : this.tranformDate(new Date()) } : todo
+      return todo.id === id ? { ...todo, done: !todo.done, dueDate: todo.resolveData ? null : this.tranformDate(new Date()), resolveData: todo.resolveData ? null : this.tranformDate(new Date()) } : todo
     }
     )
 
@@ -103,6 +94,59 @@ class Model {
       return todo.description.startsWith(searchText) ? true : false;
     })
     this.onTodoListChanged(this.todos);
+  }
+
+  handleSort(typeOfSort, stateOfList) {
+    console.log('handle sort', typeOfSort, stateOfList);
+    if (stateOfList === 'open')
+      switch (typeOfSort) {
+        case 'DESC_DATA_CREATION':
+          this.todos = this.todos.sort((a, b) => new Date(b.dateOfCreation) - new Date(a.dateOfCreation));
+          this.initialTodos = this.todos;
+          this.onTodoListChanged(this.todos);
+          break;
+        case 'ASC_DATA_CREATION':
+          this.todos = this.todos.sort((a, b) => new Date(a.dateOfCreation) - new Date(b.dateOfCreation));
+          this.initialTodos = this.todos;
+          this.onTodoListChanged(this.todos);
+          break;
+        case 'ASC_RECORDS':
+          this.todos = this.todos.sort((a, b) => a.description.localeCompare(b.description));
+          this.initialTodos = this.todos;
+          this.onTodoListChanged(this.todos);
+          break;
+
+        case 'DESC_RECORDS':
+          this.todos = this.todos.sort((a, b) => b.description.localeCompare(a.description));
+          this.initialTodos = this.todos;
+          this.onTodoListChanged(this.todos);
+          break;
+      }
+
+    if (stateOfList === 'done') {
+      switch (typeOfSort) {
+        case 'ASC_DUE_DATE':
+          this.todos = this.todos.sort((a, b) => new Date(b.dueDate) - new Date(a.dueDate));
+          this.initialTodos = this.todos;
+          this.onTodoListChanged(this.todos);
+          break;
+        case 'DESC_DUE_DATE':
+          this.todos = this.todos.sort((a, b) => new Date(b.dueDate) - new Date(a.dueDate));
+          this.initialTodos = this.todos;
+          this.onTodoListChanged(this.todos);
+          break;
+        case 'ASC_RECORDS':
+          this.todos = this.todos.sort((a, b) => a.description.localeCompare(b.description));
+          this.initialTodos = this.todos;
+          this.onTodoListChanged(this.todos);
+          break;
+        case 'DESC_RECORDS':
+          this.todos = this.todos.sort((a, b) => b.description.localeCompare(a.description));
+          this.initialTodos = this.todos;
+          this.onTodoListChanged(this.todos);
+          break;
+      }
+    }
   }
 }
 
@@ -129,6 +173,9 @@ class View {
     this.formContainer.append(this.input, this.addBtn);
 
     this.app.append(this.formContainer, this.todoList);
+
+    this.doneSelectValue = 'ASC_DUE_DATE';
+    this.openSelectValue = 'ASC_DATA_CREATION';
   }
 
   createElement(tag, className) {
@@ -247,33 +294,59 @@ class View {
     const stateOfList = this.createElement('div');
     stateOfList.textContent = state === 'open' ? 'Open' : 'Done';
 
-    let array = ['data creation',];
+    let array = [
+      { order: 'asc', text: 'Data Creation (Asc)', state: 'open', value: 'ASC_DATA_CREATION' },
+      { order: 'desc', text: 'Data Creation (Desc)', state: 'open', value: 'DESC_DATA_CREATION' },
+      { order: 'asc', text: 'Due Date (Asc)', state: 'done', value: 'ASC_DUE_DATE' },
+      { order: 'desc', text: 'Due Date (Desc)', state: 'done', value: 'DESC_DUE_DATE' },
+      { order: 'asc', text: 'Records (Asc)', state: 'done', value: 'ASC_RECORDS' },
+      { order: 'desc', text: 'Records (Desc)', state: 'open', value: 'DESC_RECORDS' },
+      { order: 'asc', text: 'Records (Asc)', state: 'open', value: 'ASC_RECORDS' },
+      { order: 'desc', text: 'Records (Desc)', state: 'done', value: 'DESC_RECORDS' },
+    ]; 
 
-    //Create and append select list
-    let selectList = document.createElement("select");
-    selectList.id = "mySelect";
+    if (state === 'open') {
+      this.selectList = document.createElement("select");
+      for (let i = 0; i < array.length; i++) {
+        if (array[i].state === state) {
+          let option = document.createElement("option");
+          option.value = array[i].value;
+          option.text = array[i].text;
+          this.selectList.appendChild(option);
+        }
+      }
 
-    //Create and append the options
-    for (let i = 0; i < array.length; i++) {
-      let option = document.createElement("option");
-      option.value = array[i];
-      option.text = array[i];
-      selectList.appendChild(option);
+      todoHeader.append(stateOfList, this.selectList);
     }
+    if (state === 'done') {
+      this.doneSelectList = document.createElement("select");
+      // this.selectList.id = 'done'
+      // this.doneSelectList = state === 'open' ? this.selectList : this.doneSelectList;
 
-    todoHeader.append(stateOfList, selectList);
-    // this.todoList.append(todoHeader)
+      //Create and append the options
+      for (let i = 0; i < array.length; i++) {
+        if (array[i].state === state) {
+          let option = document.createElement("option");
+          option.value = array[i].value;
+          option.text = array[i].text;
+          this.doneSelectList.appendChild(option);
+        }
+      }
+
+      todoHeader.append(stateOfList, this.doneSelectList);
+    }
+    
     return todoHeader;
   }
 
   bindAddTodo(handler) {
-    if(this.addBtn) {
+    if (this.addBtn) {
       this.addBtn.addEventListener('click', event => {
         console.log('click');
         console.log(this.input.value);
-        if(this.input.value.length > 0) {
-        handler(this.input.value);
-        this.input.value = '';
+        if (this.input.value.length > 0) {
+          handler(this.input.value);
+          this.input.value = '';
 
         }
 
@@ -283,23 +356,23 @@ class View {
   }
 
   bindclearAllDoneList(handler) {
-    if(this.clearDoneBtn) {
+    if (this.clearDoneBtn) {
       console.log('delete open');
       this.clearDoneBtn.addEventListener('click', event => {
         handler();
       })
     }
-    
+
   }
 
   bindclearAllOpenList(handler) {
     console.log('del open')
-    if(this.clearOpenBtn) {
+    if (this.clearOpenBtn) {
       this.clearOpenBtn.addEventListener('click', event => {
         handler();
       })
     }
-   
+
   }
 
   bindDeleteTodo(handler) {
@@ -330,6 +403,30 @@ class View {
       console.log(event.target.value);
       handler(event.target.value)
     })
+  }
+
+  bindSortList(handler) {
+    console.log('frfrfrfrfr');
+    if (this.selectList) {
+      this.selectList.addEventListener('change', (event) => {
+
+        console.log(event.target.value);
+        handler(event.target.value, 'open')
+
+        this.openSelectValue = event.target.value;
+        this.selectList.value = this.openSelectValue;
+      });
+
+    }
+
+    if (this.doneSelectList) {
+      this.doneSelectList.addEventListener('change', (event) => {
+        console.log(event.target.value);
+        this.doneSelectValue = event.target.value;
+        this.doneSelectList.value = this.doneSelectValue;
+        handler(event.target.value, 'done')
+      });
+    }
   }
 
 }
@@ -363,6 +460,10 @@ class Controller {
       this.model.handleDeleteOpenList()
     }
 
+    this.handleSort = (typeOfSort, stateOfList) => {
+      this.model.handleSort(typeOfSort, stateOfList);
+    }
+
     this.onTodoListChanged(this.model.todos);
     this.view.bindAddTodo(this.handleAddTodo)
     this.view.bindDeleteTodo(this.handleDeleteTodo)
@@ -370,13 +471,15 @@ class Controller {
     this.view.bindHeaderSearch(this.handleHeaderFilterSearch);
     this.view.bindclearAllDoneList(this.handleDeleteDoneList);
     this.view.bindclearAllOpenList(this.handleDeleteOpenList);
-    this.model.bindTodoListChanged(this.onTodoListChanged.bind(this))
+    this.model.bindTodoListChanged(this.onTodoListChanged.bind(this));
+    this.view.bindSortList(this.handleSort);
   }
 
   onTodoListChanged(todos) {
     this.view.displayTodos(todos);
     this.view.bindclearAllDoneList(this.handleDeleteDoneList);
     this.view.bindclearAllOpenList(this.handleDeleteOpenList);
+    this.view.bindSortList(this.handleSort);
   }
 
   handleEditTodo(id, todoText) {

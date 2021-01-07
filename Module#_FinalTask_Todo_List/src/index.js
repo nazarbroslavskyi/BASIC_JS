@@ -48,7 +48,6 @@ class Model {
   }
 
   handleDeleteDoneList() {
-    console.log(this);
     this.todos = this.todos.filter((todo) => !todo.done)
     localStorage.setItem("todos", JSON.stringify(this.todos));
     this.initialTodos = this.todos;
@@ -56,7 +55,6 @@ class Model {
   }
 
   handleDeleteOpenList() {
-    console.log(this);
     this.todos = this.todos.filter((todo) => todo.done)
     localStorage.setItem("todos", JSON.stringify(this.todos));
     this.initialTodos = this.todos;
@@ -75,12 +73,8 @@ class Model {
   }
 
   toggleTodo(id) {
-    console.log(id);
-    console.log(this.todos);
-
     this.todos = this.todos.map((todo) => {
-      console.log(todo)
-      return todo.id === id ? { ...todo, done: !todo.done, dueDate: todo.resolveData ? null : this.tranformDate(new Date()), resolveData: todo.resolveData ? null : this.tranformDate(new Date()) } : todo
+      return todo.id === id ? { ...todo, done: !todo.done, dueDate: todo.resolveData ? null : new Date(), resolveData: todo.resolveData ? null : this.tranformDate(new Date()) } : todo
     }
     )
 
@@ -88,9 +82,19 @@ class Model {
     localStorage.setItem("todos", JSON.stringify(this.todos));
   }
 
+  handleEdit(todoId, newValue) {
+    this.todos = this.todos.map((todo) => {
+      return todo.id === todoId ? { ...todo, description: newValue.trim() || todo.description } : todo;
+    });
+    console.log(this);
+    this.initialTodos = this.todos;
+    localStorage.setItem("todos", JSON.stringify(this.todos));
+    this.onTodoListChanged(this.todos);
+
+  }
+
   filterByHeaderSearch(searchText) {
     this.todos = this.initialTodos.filter((todo) => {
-      console.log(todo);
       return todo.description.startsWith(searchText) ? true : false;
     })
     this.onTodoListChanged(this.todos);
@@ -126,7 +130,7 @@ class Model {
     if (stateOfList === 'done') {
       switch (typeOfSort) {
         case 'ASC_DUE_DATE':
-          this.todos = this.todos.sort((a, b) => new Date(b.dueDate) - new Date(a.dueDate));
+          this.todos = this.todos.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
           this.initialTodos = this.todos;
           this.onTodoListChanged(this.todos);
           break;
@@ -206,7 +210,7 @@ class View {
       const itemDescription = this.createElement('div');
       itemDescription.classList.add('todo-item__description');
 
-      const label = this.createElement('label');
+      const label = this.createElement('div');
       label.classList.add('checkbox-container');
 
       itemDescription.append(label);
@@ -218,7 +222,11 @@ class View {
       const span = this.createElement('span');
       span.classList.add('checkmark');
 
-      label.append(todo.description, input, span);
+      const todoDescription = this.createElement('span');
+      todoDescription.classList.add('todo-description');
+      todoDescription.textContent = todo.description;
+
+      label.append(todoDescription, input, span);
 
       const time = this.createElement('div');
       time.classList.add('trash-icon-and-time');
@@ -260,14 +268,10 @@ class View {
 
       if (todo.done) {
         doneTodos.appendChild(div);
-        console.log(doneTodos);
       } else {
         openTodos.append(div)
       }
     })
-
-    console.log(doneTodos);
-    console.log(openTodos);
 
     if (openTodos.children.length > 0) {
       this.todoList.append(this.createTodoHeader('open'))
@@ -303,7 +307,7 @@ class View {
       { order: 'desc', text: 'Records (Desc)', state: 'open', value: 'DESC_RECORDS' },
       { order: 'asc', text: 'Records (Asc)', state: 'open', value: 'ASC_RECORDS' },
       { order: 'desc', text: 'Records (Desc)', state: 'done', value: 'DESC_RECORDS' },
-    ]; 
+    ];
 
     if (state === 'open') {
       this.selectList = document.createElement("select");
@@ -320,10 +324,6 @@ class View {
     }
     if (state === 'done') {
       this.doneSelectList = document.createElement("select");
-      // this.selectList.id = 'done'
-      // this.doneSelectList = state === 'open' ? this.selectList : this.doneSelectList;
-
-      //Create and append the options
       for (let i = 0; i < array.length; i++) {
         if (array[i].state === state) {
           let option = document.createElement("option");
@@ -335,29 +335,33 @@ class View {
 
       todoHeader.append(stateOfList, this.doneSelectList);
     }
-    
+
     return todoHeader;
   }
 
   bindAddTodo(handler) {
     if (this.addBtn) {
       this.addBtn.addEventListener('click', event => {
-        console.log('click');
-        console.log(this.input.value);
         if (this.input.value.length > 0) {
           handler(this.input.value);
           this.input.value = '';
+        }
+      })
 
+      this.input.addEventListener('keyup', ({ key }) => {
+        if (key === "Enter") {
+          if (this.input.value.length > 0) {
+            handler(this.input.value);
+            this.input.value = '';
+          }
         }
 
-        this.cr
       })
     }
   }
 
   bindclearAllDoneList(handler) {
     if (this.clearDoneBtn) {
-      console.log('delete open');
       this.clearDoneBtn.addEventListener('click', event => {
         handler();
       })
@@ -366,7 +370,6 @@ class View {
   }
 
   bindclearAllOpenList(handler) {
-    console.log('del open')
     if (this.clearOpenBtn) {
       this.clearOpenBtn.addEventListener('click', event => {
         handler();
@@ -376,7 +379,6 @@ class View {
   }
 
   bindDeleteTodo(handler) {
-    console.log(this.todoList);
     this.todoList.addEventListener('click', event => {
       if (event.target.classList.contains('delete')) {
         console.log('delete');
@@ -388,43 +390,76 @@ class View {
   }
 
   bindToggleTodo(handler) {
-    this.todoList.addEventListener('change', event => {
-      if (event.target.type === 'checkbox') {
+    this.todoList.addEventListener('click', event => {
+      if (event.target.classList.contains('checkmark')) {
         console.log('to');
         const id = +event.target.closest(".todo-item").id;
-
         handler(id)
+      }
+    })
+  }
+
+  bindEditTodo(handler) {
+    this.todoList.addEventListener('dblclick', event => {
+      console.log('dbclicfrfrffrfrfrfrf');
+      if (event.target.classList.contains('todo-description')) {
+        const id = +event.target.closest(".todo-item").id;
+        const editinput = document.createElement("INPUT");
+        editinput.setAttribute("type", "text");
+        editinput.setAttribute("value", event.target.textContent);
+        event.target.replaceWith(editinput);
+        editinput.focus();
+        let text = event.target.textContent;
+
+        editinput.onblur = function () {
+          updateInput(text);
+        }
+
+        editinput.onkeyup = function ({ key }) {
+          if (key === "Enter") {
+            text = editinput.value;
+            editinput.blur();
+          }
+          if (key === 'Escape') {
+            text = editinput.value;
+            editinput.blur();
+          }
+        }
+
+        function updateInput(value) {
+          const todoDescription = document.createElement("span");
+          todoDescription.setAttribute("class", "todo-description");
+          todoDescription.textContent = value;
+          editinput.replaceWith(todoDescription);
+          handler(id, value)
+        }
+
       }
     })
   }
 
   bindHeaderSearch(handler) {
     this.headerSearch.addEventListener('input', (event) => {
-      console.log(event.target.value);
       handler(event.target.value)
     })
   }
 
   bindSortList(handler) {
-    console.log('frfrfrfrfr');
     if (this.selectList) {
       this.selectList.addEventListener('change', (event) => {
 
-        console.log(event.target.value);
         handler(event.target.value, 'open')
 
         this.openSelectValue = event.target.value;
         this.selectList.value = this.openSelectValue;
       });
-
     }
 
     if (this.doneSelectList) {
       this.doneSelectList.addEventListener('change', (event) => {
-        console.log(event.target.value);
+        handler(event.target.value, 'done')
         this.doneSelectValue = event.target.value;
         this.doneSelectList.value = this.doneSelectValue;
-        handler(event.target.value, 'done')
       });
     }
   }
@@ -435,7 +470,6 @@ class Controller {
   constructor(model, view) {
     this.model = model;
     this.view = view;
-    console.log(this.view);
     this.handleDeleteTodo = (id) => {
       this.model.deleteTodo(id);
     }
@@ -464,6 +498,10 @@ class Controller {
       this.model.handleSort(typeOfSort, stateOfList);
     }
 
+    this.handleEditTodo = (todoId, newValue) => {
+      this.model.handleEdit(todoId, newValue);
+    }
+
     this.onTodoListChanged(this.model.todos);
     this.view.bindAddTodo(this.handleAddTodo)
     this.view.bindDeleteTodo(this.handleDeleteTodo)
@@ -473,6 +511,7 @@ class Controller {
     this.view.bindclearAllOpenList(this.handleDeleteOpenList);
     this.model.bindTodoListChanged(this.onTodoListChanged.bind(this));
     this.view.bindSortList(this.handleSort);
+    this.view.bindEditTodo(this.handleEditTodo);
   }
 
   onTodoListChanged(todos) {

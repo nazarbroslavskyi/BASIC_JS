@@ -101,7 +101,7 @@ h1 {
   font-size: 22px;
   user-select: none;
 
-  input {
+  input[type="checkbox"] {
     position: absolute;
     opacity: 0;
     cursor: pointer;

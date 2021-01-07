@@ -421,7 +421,7 @@ class View {
             editinput.blur();
           }
           if (key === 'Escape') {
-            text = editinput.value;
+            text = event.target.textContent;
             editinput.blur();
           }
         }
